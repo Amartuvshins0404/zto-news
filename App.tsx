@@ -7,8 +7,10 @@ import { AdminDashboard } from './pages/AdminDashboard';
 import { ArticlePage } from './pages/Article';
 
 import { EditorPage } from './pages/Editor';
+import { FacesPage } from './pages/Faces';
 import { HomePage } from './pages/Home';
 import { LoginPage } from './pages/Login';
+import { VoicesPage } from './pages/Voices';
 import { AuthProvider } from './services/authContext';
 import { TranslationProvider } from './services/translationService';
 
@@ -21,6 +23,8 @@ const App: React.FC = () => {
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/article/:id" element={<ArticlePage />} />
+              <Route path="/voices" element={<VoicesPage />} />
+              <Route path="/faces" element={<FacesPage />} />
 
               <Route path="/login" element={<LoginPage />} />
 
