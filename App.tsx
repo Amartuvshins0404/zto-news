@@ -34,6 +34,11 @@ const App: React.FC = () => {
                   <EditorPage />
                 </RequireAuth>
               } />
+              <Route path="/editor/:id" element={
+                <RequireAuth>
+                  <EditorPage />
+                </RequireAuth>
+              } />
               <Route path="/admin" element={
                 <RequireAuth requiredRole={['admin', 'super_admin']}>
                   <AdminDashboard />

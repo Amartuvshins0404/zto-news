@@ -39,11 +39,12 @@ import {
   Youtube
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { FontSize, FontWeight, TextStyle } from '../components/EditorExtensions';
 import { MediaLibrary } from '../components/MediaLibrary';
 import { PostDetailView } from '../components/PostDetailView';
 import { Button, Input } from '../components/UI';
-import { saveArticle } from '../services/api'; // NEW IMPORTS
+import { getArticleById, saveArticle } from '../services/api'; // NEW IMPORTS
 import { useTranslation } from '../services/translationService';
 import { ContentType } from '../types';
 
@@ -235,6 +236,24 @@ export const EditorPage: React.FC = () => {
     },
   });
 
+  const { id } = useParams<{ id: string }>();
+
+  useEffect(() => {
+    if (id) {
+      getArticleById(id).then(article => {
+        if (article) {
+          setTitle(article.title);
+          setFeaturedImage(article.imageUrl);
+          setCategory(article.type === ContentType.Video ? 'voices' : 'faces'); // Simplified mapping
+          setYoutubeUrl(article.videoUrl || '');
+          if (editor && article.content) {
+            editor.commands.setContent(article.content);
+          }
+        }
+      });
+    }
+  }, [id, editor]);
+
   useEffect(() => {
     if (category === 'voices' && youtubeUrl) {
       const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -268,6 +287,7 @@ export const EditorPage: React.FC = () => {
     setIsSaving(true);
     try {
       await saveArticle({
+        id: id, // Pass ID for update
         title: title,
         imageUrl: featuredImage,
         type: category === 'voices' ? ContentType.Video : ContentType.Article,

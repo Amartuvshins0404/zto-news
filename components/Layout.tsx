@@ -9,15 +9,30 @@ import { Button, ThemeToggle } from './UI';
 
 // --- Header ---
 export const Header: React.FC = () => {
+  const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
-  const { t, lang, setLang } = useTranslation();
+  const { t, lang, setLang, availableLanguages } = useTranslation();
   const { user, logout } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
 
+  React.useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
-    <header className="sticky top-0 z-50 bg-white/95 dark:bg-neutral-dark/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 transition-colors">
+    <header
+      className={`fixed w-full top-0 z-50 transition-all duration-300 transform ${isScrolled || location.pathname !== '/'
+        ? 'translate-y-0 bg-white/95 dark:bg-neutral-dark/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800'
+        : '-translate-y-full bg-transparent border-transparent'
+        }`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
@@ -44,13 +59,18 @@ export const Header: React.FC = () => {
 
             <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-2"></div>
 
-            {/* Lang Toggle */}
-            <button
-              onClick={() => setLang(lang === 'mn' ? 'en' : 'mn')}
-              className="text-xs font-bold text-gray-600 dark:text-gray-300 hover:text-primary-600 uppercase"
+            {/* Language Selector */}
+            <select
+              value={lang}
+              onChange={(e) => setLang(e.target.value)}
+              className="text-xs font-bold text-gray-600 dark:text-gray-300 bg-transparent border border-gray-300 dark:border-gray-600 rounded px-2 py-1 uppercase cursor-pointer hover:border-primary-600 dark:hover:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 transition-colors"
             >
-              {lang}
-            </button>
+              {availableLanguages.map(langCode => (
+                <option key={langCode} value={langCode} className="bg-white dark:bg-gray-800">
+                  {langCode.toUpperCase()}
+                </option>
+              ))}
+            </select>
 
             <ThemeToggle />
 
@@ -210,10 +230,13 @@ export const Footer: React.FC = () => {
 };
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const location = useLocation();
+  const isHome = location.pathname === '/';
+
   return (
     <div className="min-h-screen flex flex-col font-sans">
       <Header />
-      <main className="flex-grow bg-white dark:bg-neutral-dark transition-colors">
+      <main className={`flex-grow bg-white dark:bg-neutral-dark transition-colors ${!isHome ? 'pt-16' : ''}`}>
         {children}
       </main>
       <Footer />

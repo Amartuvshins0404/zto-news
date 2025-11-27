@@ -1,6 +1,7 @@
 
-import { Clock, Edit2, Eye, Image, Languages, LayoutDashboard, MessageSquare, MousePointer, Plus, Send, Trash2, TrendingDown, TrendingUp, Users } from 'lucide-react';
+import { ChevronDown, Clock, Edit2, Eye, Image, Languages, LayoutDashboard, MessageSquare, MousePointer, Plus, Send, Trash2, TrendingDown, TrendingUp, Users } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
     Area,
     AreaChart,
@@ -21,7 +22,7 @@ import { useTranslation } from '../services/translationService';
 import { AnalyticsDashboardData, Article, Comment, MediaItem } from '../types';
 
 export const AdminDashboard: React.FC = () => {
-    const { t, dictionary, lang, updateTranslation, addLanguage, removeLanguage, availableLanguages } = useTranslation();
+    const { t, dictionary, lang, updateTranslation, addLanguage, removeLanguage, availableLanguages, saveAllTranslations, refreshTranslations, clearCache } = useTranslation();
     const [activeTab, setActiveTab] = useState<'overview' | 'posts' | 'comments' | 'media' | 'translations'>('overview');
 
     // Data State
@@ -38,6 +39,10 @@ export const AdminDashboard: React.FC = () => {
     // Translation State
     const [targetLang, setTargetLang] = useState<string>('mn');
     const [newLangCode, setNewLangCode] = useState('');
+
+    // Chart State
+    const [timeRange, setTimeRange] = useState<'7d' | '30d'>('7d');
+    const [isTimeRangeOpen, setIsTimeRangeOpen] = useState(false);
 
     useEffect(() => {
         getAnalytics().then(setAnalytics);
@@ -94,6 +99,13 @@ export const AdminDashboard: React.FC = () => {
             'Bounce Rate': <Users className="w-5 h-5 text-teal-500" />
         };
 
+        const filteredTrends = analytics.trends.filter(item => {
+            const date = new Date(item.date);
+            const now = new Date();
+            const daysDiff = (now.getTime() - date.getTime()) / (1000 * 3600 * 24);
+            return timeRange === '7d' ? daysDiff <= 7 : daysDiff <= 30;
+        });
+
         return (
             <div className="space-y-8 animate-fade-in">
                 {/* Scorecards */}
@@ -120,13 +132,35 @@ export const AdminDashboard: React.FC = () => {
                     <Card className="p-6 lg:col-span-2 h-[400px]">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-lg font-bold text-gray-900 dark:text-white">Audience Growth</h3>
-                            <select className="text-sm border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 bg-gray-50 dark:bg-gray-800 dark:text-white dark:border-gray-600">
-                                <option>Last 7 Days</option>
-                                <option>Last 30 Days</option>
-                            </select>
+                            <div className="relative">
+                                <button
+                                    onClick={() => setIsTimeRangeOpen(!isTimeRangeOpen)}
+                                    className="flex items-center space-x-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                >
+                                    <span>{timeRange === '7d' ? 'Last 7 Days' : 'Last 30 Days'}</span>
+                                    <ChevronDown className="w-4 h-4" />
+                                </button>
+
+                                {isTimeRangeOpen && (
+                                    <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-100 dark:border-gray-700 z-10 py-1 animate-fade-in-up">
+                                        <button
+                                            onClick={() => { setTimeRange('7d'); setIsTimeRangeOpen(false); }}
+                                            className={`w-full text-left px-4 py-2 text-sm ${timeRange === '7d' ? 'text-primary-600 bg-primary-50 dark:bg-primary-900/20' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+                                        >
+                                            Last 7 Days
+                                        </button>
+                                        <button
+                                            onClick={() => { setTimeRange('30d'); setIsTimeRangeOpen(false); }}
+                                            className={`w-full text-left px-4 py-2 text-sm ${timeRange === '30d' ? 'text-primary-600 bg-primary-50 dark:bg-primary-900/20' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+                                        >
+                                            Last 30 Days
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         <ResponsiveContainer width="100%" height="85%">
-                            <AreaChart data={analytics.trends}>
+                            <AreaChart data={filteredTrends}>
                                 <defs>
                                     <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#163D63" stopOpacity={0.8} />
@@ -240,7 +274,9 @@ export const AdminDashboard: React.FC = () => {
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{post.title}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(post.publishedAt).toLocaleDateString()}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <Button variant="ghost" size="sm" className="mr-2"><Edit2 className="w-4 h-4" /></Button>
+                                <Link to={`/editor/${post.id}`}>
+                                    <Button variant="ghost" size="sm" className="mr-2"><Edit2 className="w-4 h-4" /></Button>
+                                </Link>
                                 <Button variant="danger" size="sm" onClick={() => handleDeletePost(post.id)}><Trash2 className="w-4 h-4" /></Button>
                             </td>
                         </tr>
@@ -319,6 +355,42 @@ export const AdminDashboard: React.FC = () => {
                     <Select value={targetLang} onChange={(e) => setTargetLang(e.target.value)}>
                         {availableLanguages.map(l => <option key={l} value={l}>{l.toUpperCase()}</option>)}
                     </Select>
+                    <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={async () => {
+                            try {
+                                await saveAllTranslations();
+                                alert('✅ Translations saved successfully!');
+                            } catch (error) {
+                                alert('❌ Failed to save translations');
+                            }
+                        }}
+                    >
+                        {t('save')} All
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={async () => {
+                            await refreshTranslations();
+                            alert('🔄 Translations refreshed from database');
+                        }}
+                        title="Refresh from database"
+                    >
+                        🔄
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                            clearCache();
+                            alert('🗑️ Cache cleared');
+                        }}
+                        title="Clear cache"
+                    >
+                        🗑️
+                    </Button>
                     {targetLang !== 'en' && targetLang !== 'mn' && (
                         <Button variant="danger" size="sm" onClick={() => removeLanguage(targetLang)}><Trash2 className="w-4 h-4" /></Button>
                     )}
@@ -335,7 +407,7 @@ export const AdminDashboard: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody className="bg-white dark:bg-neutral-dark divide-y divide-gray-200 dark:divide-gray-700">
-                            {Object.keys(dictionary['en']).map(key => (
+                            {dictionary['en'] && Object.keys(dictionary['en']).map(key => (
                                 <tr key={key}>
                                     <td className="px-6 py-2 text-sm text-gray-500 font-mono">{key}</td>
                                     <td className="px-6 py-2">
@@ -373,8 +445,8 @@ export const AdminDashboard: React.FC = () => {
                                 key={item.id}
                                 onClick={() => setActiveTab(item.id as any)}
                                 className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${activeTab === item.id
-                                        ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300'
-                                        : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800'
+                                    ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300'
+                                    : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800'
                                     }`}
                             >
                                 <item.icon className="w-5 h-5 mr-3" />
