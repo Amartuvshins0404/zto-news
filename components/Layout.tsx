@@ -7,7 +7,7 @@ import { useTranslation } from '../services/translationService';
 import { NotificationDropdown } from './NotificationDropdown';
 import { Button, ThemeToggle } from './UI';
 
-// --- Header ---
+
 export const Header: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -38,7 +38,7 @@ export const Header: React.FC = () => {
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center">
             <Link to="/" className="text-2xl font-serif font-bold text-primary-600 dark:text-white tracking-tight">
-              VOICES<span className="text-accent">.</span>
+              <img src="/logo.png" className="w-20" />
             </Link>
           </div>
 
@@ -176,7 +176,7 @@ export const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <div className="col-span-1 md:col-span-1">
             <Link to="/" className="text-2xl font-serif font-bold text-primary-600 dark:text-white">
-              VOICES<span className="text-accent">.</span>
+              <img src="/logo.png" className="w-20" />
             </Link>
             <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
               {t('footer_motto')}
